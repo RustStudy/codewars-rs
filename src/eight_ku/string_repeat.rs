@@ -26,7 +26,7 @@ macro_rules! times {
     }};
 }
 
-fn repeat_str(src: &str, count: usize) -> String {
+fn repeat_str_1(src: &str, count: usize) -> String {
   let mut string = String::new();
   times!(count, {
       string += src
@@ -37,20 +37,20 @@ fn repeat_str(src: &str, count: usize) -> String {
 // solution2
 // 主要是实现类似Ruby的写法： 5.times(|x| x + 2);
 trait Time {
-    fn times<F>(&self, closure: F) where F: Fn(i32) -> i32;
+    fn times<F>(&self, mut closure: F) where F: FnMut() ;
 }
 
 impl Time for u32 {
-    fn times<F>(&self, closure: F) where F: Fn(i32) -> i32{
-        for i in 0..*self {
-          println!("{:?}", closure(1));
-        }
+    fn times<F>(&self, mut closure: F) where F: FnMut() {
+        for _ in 0..*self {closure()}
     }
 }
 
-// fn main() {
-//     5.times(|x| x + 2);
-// }
+fn repeat_str(src: &str, count: u32) -> String {
+  let mut string = String::new();
+  count.times(|| string += src);
+  string
+}
 
 #[test]
 fn example_tests() {
