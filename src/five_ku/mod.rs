@@ -1,1 +1,3 @@
 pub mod common_denominators;
+pub mod product_of_consecutive_fib_numbers;
+pub mod probabilities_for_sums_in_rolling_cubic_dice;
