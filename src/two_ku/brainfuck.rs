@@ -32,6 +32,8 @@ the output of the interpreted code (always as a string), produced by the . instr
 [: 若当前指针所指的值为 0，则命令跳到该 [ 匹配的结束 ] 符号位置的下一位置的指令。
 ]: 若当前指针所指的值不为 0，则指令向前跳到该 ] 匹配到的 [ 符号位置的下一位置的指令。
 
+注： https://fatiherikli.github.io/brainfuck-visualizer/
+
 */
 
 // solution 1
@@ -44,8 +46,8 @@ fn loop_map(tokens: &Vec<char>) -> (HashMap<usize,usize>, HashMap<usize,usize>) 
     // example: `[-<<+>>]`
     // 碰到`[`推入栈（map_stack）中
     // 碰到`]`，将栈顶的起始下标弹出，赋值给start
-    //    定义forward_map为： {Some(1), 8}
-    //    定义backward_map为： {8, Some(1)}
+    //    定义forward_map为： {1, 8}
+    //    定义backward_map为： {8, 1}
     for i in 0..tokens.len() {
         match tokens[i] {
             '[' => map_stack.push(i),
@@ -71,7 +73,7 @@ fn brain_luck(code: &str, input: Vec<u8>) -> Vec<u8> {
     let mut code_pointer = 0; // 当前代码的位置
     let mut cell_pointer = 0; // 当前单元格的位置
     let mut input_pointer = 0; // 当前输入的位置指针
-    let mut result: Vec<u8> = vec![];
+    let mut output: Vec<u8> = vec![]; // 记录输出
 
     while code_pointer < tokens.len() {
         match tokens[code_pointer] {
@@ -97,7 +99,7 @@ fn brain_luck(code: &str, input: Vec<u8>) -> Vec<u8> {
                     }
                 }
             },
-            '.' => result.push(cells[cell_pointer]),
+            '.' => output.push(cells[cell_pointer]),
             ',' => {
                 if input_pointer <= input.len() {
                     cells[cell_pointer] = input[input_pointer];
@@ -109,7 +111,7 @@ fn brain_luck(code: &str, input: Vec<u8>) -> Vec<u8> {
         }
         code_pointer += 1;
     }
-    result
+    output
 }
 
 // solution 2
