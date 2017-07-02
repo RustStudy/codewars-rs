@@ -34,6 +34,11 @@ the output of the interpreted code (always as a string), produced by the . instr
 
 注： https://fatiherikli.github.io/brainfuck-visualizer/
 
+Rust中 u8类型：
+
+加一，以 255 为界，溢出为 0，即 255 + 1 = 0，使用wrapping_add方法
+减一，以 0 为界，溢出为 255，即 0 - 1 = 255，使用wrapping_sub方法
+
 */
 
 // solution 1
@@ -43,6 +48,7 @@ fn loop_map(tokens: &Vec<char>) -> (HashMap<usize,usize>, HashMap<usize,usize>) 
     let (mut forward_map, mut backward_map) = (HashMap::new(), HashMap::new());
     let mut map_stack = Vec::new();
 
+    // map_stack栈结构用来记录`[`和`]`两头的索引，制造循环
     // example: `[-<<+>>]`
     // 碰到`[`推入栈（map_stack）中
     // 碰到`]`，将栈顶的起始下标弹出，赋值给start
@@ -62,7 +68,6 @@ fn loop_map(tokens: &Vec<char>) -> (HashMap<usize,usize>, HashMap<usize,usize>) 
             _ => {}
         }
     }
-
     return (forward_map, backward_map)
 }
 
@@ -155,7 +160,7 @@ fn jump<'a, I: 'a>(code: I) -> usize
 }
 
 // solution 3
-
+// 面向对象思维
 use std::str;
 
 fn brain_luck_3(code: &str, mut input: Vec<u8>) -> Vec<u8> {
@@ -245,7 +250,7 @@ impl Data {
 }
 
 // solution 4
-
+// 面向对象思维2
 use std::collections::HashMap;
 use std::fmt;
 
