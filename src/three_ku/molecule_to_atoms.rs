@@ -53,7 +53,6 @@ pub struct LoopMapError {
 // type Molecule = Vec<Atom>;
 
 pub fn parse_molecule(s: &str) -> Result<Molecule, ParseError> {
-
     let v = match tokenizing(s){
         Ok(v) => v,
         _ => vec![],
@@ -67,102 +66,91 @@ pub fn parse_molecule(s: &str) -> Result<Molecule, ParseError> {
     let mut level_3_numer = 1;
 
     let brace_map = loop_map(&v);
-    println!("{:?}", brace_map);
+
     match brace_map {
         Ok(map) => {
-                let mut result_map = HashMap::new();
-    for i in 0..v.len(){
-        match v[i].as_str() {
-            "{" => {
-                match map.get(&i) {
-                    Some(number) => level_1_numer = *number,
-                    _ => {}
-                }
-
-            },
-            "}" => {
-                level_1_numer = 1;
-
-            },
-            "[" => {
-                match map.get(&i) {
-                    Some(number) => level_2_numer = *number,
-                    _ => {}
-                }
-
-            },
-            "]" => {
-                level_2_numer = 1;
-
-            },
-            "(" => {
-                match map.get(&i) {
-                    Some(number) => level_3_numer = *number,
-                    _ => {}
-                }
-
-            },
-            ")" => {
-                level_3_numer = 1;
-            },
-            _ => {
-                let total_number = level_1_numer * level_2_numer * level_3_numer;
-                if !string_is_digit(v[i].clone()){
-
-                   if i+1 <= v.len()-1 && string_is_digit(v[i+1].clone()){
-                        if result_map.contains_key(&v[i]) {
-                            let val: usize ;
-                            {
-                                val = *result_map.get_mut(&v[i]).unwrap();
-                            }
-                            result_map.insert(v[i].clone(), val + string_to_usize(v[i+1].clone())*total_number);
-                        }else{
-                            result_map.insert(v[i].clone(), string_to_usize(v[i+1].clone())*total_number);
+            let mut result_map = HashMap::new();
+            for i in 0..v.len(){
+                match v[i].as_str() {
+                    "{" => {
+                        match map.get(&i) {
+                            Some(number) => level_1_numer = *number,
+                            _ => {}
                         }
-                    }else{
-                        if result_map.contains_key(&v[i]) {
-                            let val: usize;
-                            {
-                                val = *result_map.get_mut(&v[i]).unwrap();
+                    },
+                    "}" => { level_1_numer = 1; },
+                    "[" => {
+                        match map.get(&i) {
+                            Some(number) => level_2_numer = *number,
+                            _ => {}
+                        }
+                    },
+                    "]" => { level_2_numer = 1; },
+                    "(" => {
+                        match map.get(&i) {
+                            Some(number) => level_3_numer = *number,
+                            _ => {}
+                        }
+                    },
+                    ")" => {
+                        level_3_numer = 1;
+                    },
+                    _ => {
+                        let total_number = level_1_numer * level_2_numer * level_3_numer;
+                        if !string_is_digit(v[i].clone()){
+                            if i+1 <= v.len()-1 && string_is_digit(v[i+1].clone()){
+                                if result_map.contains_key(&v[i]) {
+                                    let val: usize ;
+                                    {
+                                        val = *result_map.get_mut(&v[i]).unwrap();
+                                    }
+                                    result_map.insert(v[i].clone(), val + string_to_usize(v[i+1].clone())*total_number);
+                                }else{
+                                    result_map.insert(v[i].clone(), string_to_usize(v[i+1].clone())*total_number);
+                                }
+                            }else{
+                                if result_map.contains_key(&v[i]) {
+                                    let val: usize;
+                                    {
+                                        val = *result_map.get_mut(&v[i]).unwrap();
+                                    }
+                                    result_map.insert(v[i].clone(), val + 1*total_number);
+                                }else{
+                                    result_map.insert(v[i].clone(), 1*total_number);
+                                }
                             }
-                            result_map.insert(v[i].clone(), val + 1*total_number);
-                        }else{
-                            result_map.insert(v[i].clone(), 1*total_number);
                         }
                     }
                 }
-
-
             }
-        }
 
-    }
+            let mut vec = vec![];
+            let mut vec2 = vec![];
 
-    let mut vec = vec![];
-    let mut vec2 = vec![];
+            for i in v{
+                if !vec.contains(&i){ vec.push(i); }
+            }
 
-    for i in v{
-        if !vec.contains(&i){
-            vec.push(i);
-        }
-    }
-    println!("v {:?}", vec);
-    for e in vec {
-
-        if result_map.contains_key(&e){
-            vec2.push((e.clone(), result_map.get(&e).unwrap()));
-        }
-    }
-
-    vec2
-    },
+            for e in vec {
+                if result_map.contains_key(&e){
+                    vec2.push((e.clone(), result_map.get(&e).unwrap()));
+                }
+            }
+            vec2
+        },
         Err(e) => {
-
             ParseError{ message: "Mismatched parenthesis"}
         },
     }
 }
 
+/*
+利用堆栈来判断对应的括号: {},[], ()
+因为有层级关系，所以将花括号定为一级、中括号定位二级、圆括号定位三级
+利用此堆栈来得到层级对应的数，比如：{[Co(NH3)4(OH)2]3Co}(SO4)3
+对应于： {[()4()2]3}()3，则返回：Ok({ 0: 1, 1: 3, 3: 4, 9: 2, 18: 3})
+
+*/
 fn loop_map(tokens: &Vec<String>) -> Result<HashMap<usize, usize>, LoopMapError> {
     let mut map =  HashMap::new();
     let mut map_stack = Vec::new();
@@ -204,8 +192,6 @@ fn loop_map(tokens: &Vec<String>) -> Result<HashMap<usize, usize>, LoopMapError>
                     None => break,
                     Some(x) => x,
                 };
-
-
                 if string_is_digit(tokens[i+1].clone()){
                     map.insert(start, string_to_usize(tokens[i+1].clone()));
                 }else{
@@ -218,7 +204,6 @@ fn loop_map(tokens: &Vec<String>) -> Result<HashMap<usize, usize>, LoopMapError>
                     None => break,
                     Some(x) => x,
                 };
-
 
                 if string_is_digit(tokens[i+1].clone()){
                     map.insert(start, string_to_usize(tokens[i+1].clone()));
@@ -239,6 +224,10 @@ fn loop_map(tokens: &Vec<String>) -> Result<HashMap<usize, usize>, LoopMapError>
     }
 }
 
+/*
+分词，将化学式字符串分解为Vector
+"K4[ON(SO3)2]2"  => ["K", "4", "[", "O", "N", "(", "S", "O", "3", ")", "2", "]", "2"]
+*/
 fn tokenizing(str: &str) -> Result<Vec<String>, LoopMapError>{
     let string = str.to_string();
     let chars_arr: Vec<char> = string.chars().collect();
