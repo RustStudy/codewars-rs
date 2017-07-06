@@ -1,4 +1,5 @@
 pub mod two_ku;
+pub mod three_ku;
 pub mod four_ku;
 pub mod five_ku;
 pub mod six_ku;
