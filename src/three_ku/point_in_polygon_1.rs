@@ -89,7 +89,7 @@ fn point_in_poly_2(poly: &[Point], (x, y): Point) -> bool {
 
 // solution 3
 
-fn point_in_poly(poly: &[Point], point: Point) -> bool {
+fn point_in_poly_3(poly: &[Point], point: Point) -> bool {
     let mut c = false;
     let (x, y) = point;
 
@@ -106,13 +106,110 @@ fn point_in_poly(poly: &[Point], point: Point) -> bool {
     c
 }
 
+// solution 4
+// 使用了winding number积分方法，比射线法更精确
+// http://geomalgorithms.com/a03-_inclusion.html
+
+// (x, y)
+// type Point = (f32, f32); // defined by framework
+
+// (top, left, bottom, right)
+type Rect = (f32, f32, f32, f32);
+
+// The following geom funcs work on complex polygons and run in O(n)
+// We could use an O(log n) for convex polygos, but doing so would require
+// some preprocessing to determine monotonicity
+
+
+/// Tests if a point is left, on, or right of an infinite line
+///
+///    # Arguments
+///
+///    * `p0` A point on an infinte line
+///    * `p1` Another point on an infinite line != p0
+///    * `p2` The point to test
+///
+///    # Return value
+///
+///    * >0 for p2 left of the line through p0 and p1
+///    * =0 for p2 on the line
+///    * <0 for p2 right of the line
+#[inline]
+fn is_left(p0: Point, p1: Point, p2: Point) -> f32 {
+    (p1.0 - p0.0) * (p2.1 - p0.1) - (p2.0 - p0.0) * (p1.1 - p0.1)
+}
+
+/// Calculates the bounding box of a polygon
+#[inline]
+fn bounding_box(poly: &[Point]) -> Rect {
+    use std::f32::{INFINITY, NEG_INFINITY};
+    poly.iter().fold((INFINITY, NEG_INFINITY, NEG_INFINITY, INFINITY), |mut rect, point| {
+        rect.0 = rect.0.min(point.1); // top
+        rect.1 = rect.1.min(point.0); // left
+        rect.2 = rect.2.max(point.1); // bottom
+        rect.3 = rect.3.max(point.0); // right
+        rect
+    })
+}
+
+/// Tests if a point is inside a rect
+#[inline]
+fn in_bounds(rect: Rect, point: Point) -> bool {
+    if point.1 < rect.0 { return false; } // top
+    if point.0 < rect.1 { return false; } // left
+    if point.1 > rect.2 { return false; } // bottom
+    if point.0 > rect.3 { return false; } // right
+    true
+}
+
+/// Alg ported from c++ http://geomalgorithms.com/a03-_inclusion.html
+#[inline]
+fn winding_number(poly: &[Point], point: Point) -> bool {
+    let mut wn = 0usize; // the  winding number counter
+
+    // loop through all edges of the polygon
+    let mut iter = poly.iter().cycle().peekable();
+    for _ in 0..poly.len() {
+        let curr = *iter.next().unwrap();
+        let next = **iter.peek().unwrap();
+
+        if curr.1 <= point.1 {
+            // point below vertex
+            if next.1 > point.1 {
+                // an upward crossing
+                if is_left(curr, next, point) > 0. {
+                    // P left of edge
+                    wn += 1; // have a valid up intersect
+                }
+            }
+        } else {
+            // point above vertex
+            if next.1 <= point.1 {
+                // a downward crossing
+                if is_left(curr, next, point) < 0. {
+                    // point right of edge
+                    wn -= 1; // have a valid down intersect
+                }
+            }
+        }
+    }
+    wn > 0
+}
+
+fn point_in_poly_4(poly: &[Point], point: Point) -> bool {
+    in_bounds(bounding_box(poly), point) && winding_number(poly, point)
+}
+
 
 // for test
 
 #[test]
 fn simple_square() {
-  let poly = [(-5., -5.), (5., -5.),
+
+    let poly = [(-5., -5.), (5., -5.),
               (5., 5.), (-5., 5.)];
-  show_and_test(&poly, (-6., 0.), false);
-  show_and_test(&poly, (-1., 1.), true);
+    assert_eq!(point_in_poly(&poly, (-6., 0.)), false);
+    assert_eq!(point_in_poly(&poly, (-1., 1.)), true);
+    // show_and_test(&poly, (-6., 0.), false);
+    // show_and_test(&poly, (-1., 1.), true);
 }
