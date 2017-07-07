@@ -22,11 +22,24 @@ validBraces( "([{}])" ) => returns true
 
 use std::collections::HashMap;
 
+macro_rules! hash(
+    { $($key:expr => $value:expr),+ } => {
+        {
+            let mut m = ::std::collections::HashMap::new();
+            $(
+                m.insert($key, $value);
+            )+
+            m
+        }
+     };
+);
+
 fn valid_map(tokens: &Vec<char>) -> bool {
-    let mut map =  HashMap::new();
-    map.insert('{', '}');
-    map.insert('[', ']');
-    map.insert('(', ')');
+    // let mut map =  HashMap::new();
+    // map.insert('{', '}');
+    // map.insert('[', ']');
+    // map.insert('(', ')');
+    let mut map = hash!{'{' => '}', '[' => ']', '(' => ')'};
     let mut map_stack = Vec::new();
     let mut result: bool = false;
 
@@ -56,6 +69,12 @@ fn valid_map(tokens: &Vec<char>) -> bool {
     result
 }
 
+fn valid_braces(s: &str) -> bool {
+    let string = s.to_string();
+    let chars_arr: Vec<char> = string.chars().collect();
+    valid_map(&chars_arr)
+}
+
 // solution 2
 
 fn valid_braces_2(s: &str) -> bool {
@@ -73,6 +92,7 @@ fn valid_braces_2(s: &str) -> bool {
       }
       stack.is_empty()
 }
+
 
 // solution 3
 
@@ -103,13 +123,7 @@ fn valid_braces_4(s: &str) -> bool {
   br.is_empty()
 }
 
-// for test
-
-fn valid_braces(s: &str) -> bool {
-    let string = s.to_string();
-    let chars_arr: Vec<char> = string.chars().collect();
-    valid_map(&chars_arr)
-}
+// for codewars test
 
 #[test]
 fn basic_tests() {
